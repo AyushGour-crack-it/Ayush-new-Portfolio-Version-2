@@ -12,11 +12,13 @@ const media = [
 ];
 
 const HeroDeck = () => {
-  const [index, setIndex] = useState(1); // start from 1 (because of clones)
+  const [index, setIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(true);
+  const [bg, setBg] = useState("#000");
+  const [accent, setAccent] = useState("#38bdf8");
+
   const containerRef = useRef(null);
 
-  // 🔥 CLONE FIRST + LAST (for infinite effect)
   const slides = [
     media[media.length - 1],
     ...media,
@@ -26,18 +28,20 @@ const HeroDeck = () => {
   const next = () => setIndex((prev) => prev + 1);
   const prev = () => setIndex((prev) => prev - 1);
 
-  /* 🔥 SWIPE */
+  /* 🔥 TINDER STYLE DRAG */
   const bind = useDrag(({ movement: [mx], down, direction: [xDir], velocity }) => {
     if (!down) {
-      if (Math.abs(mx) > 60 || velocity > 0.3) {
+      if (Math.abs(mx) > 60 || velocity > 0.25) {
         xDir > 0 ? prev() : next();
       }
     }
   });
 
-  /* 🔥 HANDLE LOOP RESET (NO JUMP VISIBLE) */
+  /* 🔁 LOOP FIX */
   useEffect(() => {
-    const handleTransitionEnd = () => {
+    const el = containerRef.current;
+
+    const handleEnd = () => {
       if (index === slides.length - 1) {
         setIsAnimating(false);
         setIndex(1);
@@ -48,10 +52,8 @@ const HeroDeck = () => {
       }
     };
 
-    const el = containerRef.current;
-    el.addEventListener("transitionend", handleTransitionEnd);
-
-    return () => el.removeEventListener("transitionend", handleTransitionEnd);
+    el.addEventListener("transitionend", handleEnd);
+    return () => el.removeEventListener("transitionend", handleEnd);
   }, [index]);
 
   useEffect(() => {
@@ -60,28 +62,64 @@ const HeroDeck = () => {
     }
   }, [isAnimating]);
 
-  return (
-    <div className="w-full max-w-[520px] mx-auto">
+  /* 🎨 COLOR EXTRACTION */
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = slides[index];
 
-      {/* 🔹 MAIN SLIDER */}
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = 50;
+      canvas.height = 50;
+
+      ctx.drawImage(img, 0, 0, 50, 50);
+
+      const data = ctx.getImageData(0, 0, 50, 50).data;
+
+      let r = 0, g = 0, b = 0, count = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        r += data[i];
+        g += data[i + 1];
+        b += data[i + 2];
+        count++;
+      }
+
+      r = Math.floor(r / count);
+      g = Math.floor(g / count);
+      b = Math.floor(b / count);
+
+      const color = `rgb(${r}, ${g}, ${b})`;
+      setBg(color);
+      setAccent(color);
+    };
+  }, [index]);
+
+  return (
+    <div className="w-full max-w-[520px] mx-auto relative">
+
+      {/* 🔥 BLUR BACKGROUND */}
+      <div
+        className="absolute inset-0 -z-10 blur-3xl opacity-30 transition-all duration-500"
+        style={{ background: bg }}
+      />
+
+      {/* 🔹 SLIDER */}
       <div className="relative overflow-hidden">
 
         {/* ARROWS */}
-        <button
-          onClick={prev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
-        >
+        <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass">
           <FiArrowLeft />
         </button>
 
-        <button
-          onClick={next}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
-        >
+        <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass">
           <FiArrowRight />
         </button>
 
-        {/* SLIDER TRACK */}
+        {/* TRACK */}
         <div
           {...bind()}
           ref={containerRef}
@@ -93,24 +131,50 @@ const HeroDeck = () => {
               : "none",
           }}
         >
-          {slides.map((src, i) => (
-            <div key={i} className="min-w-full p-2 flex justify-center">
-              
-              {/* 🔥 FIXED IMAGE RESPONSIVENESS */}
-              <div className="w-full max-w-[480px] aspect-[4/5] rounded-[2rem] overflow-hidden glass border border-theme">
-                <img
-                  src={src}
-                  className="w-full h-full object-contain sm:object-cover"
-                  alt="media"
-                />
-              </div>
+          {slides.map((src, i) => {
+            const isActive = i === index;
 
-            </div>
-          ))}
+            return (
+              <div key={i} className="min-w-full p-2 flex justify-center">
+
+                {/* 🔥 ZOOM + PARALLAX */}
+                <div
+                  className="w-full max-w-[480px] aspect-[4/5] rounded-[2rem] overflow-hidden relative"
+                  style={{
+                    transform: isActive ? "scale(1)" : "scale(0.9)",
+                    transition: "transform 0.4s ease",
+                    boxShadow: isActive
+                      ? `0 20px 60px ${accent}55`
+                      : "none",
+                  }}
+                >
+
+                  {/* 🔥 ANIMATED BORDER */}
+                  <div
+                    className="absolute inset-0 rounded-[2rem] p-[2px]"
+                    style={{
+                      background: `linear-gradient(135deg, ${accent}, transparent, ${accent})`,
+                      animation: "spin 6s linear infinite",
+                    }}
+                  >
+                    <div className="w-full h-full rounded-[2rem] overflow-hidden glass">
+                      <img
+                        src={src}
+                        className="w-full h-full object-contain sm:object-cover"
+                        alt=""
+                      />
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* 🔹 THUMBNAILS (ONLY MOBILE) */}
+      {/* 🔹 THUMBNAILS */}
       <div className="flex gap-2 mt-4 overflow-x-auto sm:hidden px-2">
         {media.map((src, i) => (
           <img
@@ -123,7 +187,6 @@ const HeroDeck = () => {
           />
         ))}
       </div>
-
     </div>
   );
 };

@@ -154,3 +154,9 @@ img {
   -webkit-user-drag: none;
   user-select: none;
 }
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
