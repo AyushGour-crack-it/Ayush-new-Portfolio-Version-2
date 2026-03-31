@@ -12,71 +12,118 @@ const media = [
 ];
 
 const HeroDeck = () => {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(1); // start from 1 (because of clones)
+  const [isAnimating, setIsAnimating] = useState(true);
   const containerRef = useRef(null);
 
-  const next = () => {
-    setIndex((prev) => (prev + 1) % media.length);
-  };
+  // 🔥 CLONE FIRST + LAST (for infinite effect)
+  const slides = [
+    media[media.length - 1],
+    ...media,
+    media[0],
+  ];
 
-  const prev = () => {
-    setIndex((prev) => (prev - 1 + media.length) % media.length);
-  };
+  const next = () => setIndex((prev) => prev + 1);
+  const prev = () => setIndex((prev) => prev - 1);
 
-  /* 🔥 DRAG / SWIPE */
+  /* 🔥 SWIPE */
   const bind = useDrag(({ movement: [mx], down, direction: [xDir], velocity }) => {
     if (!down) {
-      if (Math.abs(mx) > 80 || velocity > 0.3) {
+      if (Math.abs(mx) > 60 || velocity > 0.3) {
         xDir > 0 ? prev() : next();
       }
     }
   });
 
+  /* 🔥 HANDLE LOOP RESET (NO JUMP VISIBLE) */
+  useEffect(() => {
+    const handleTransitionEnd = () => {
+      if (index === slides.length - 1) {
+        setIsAnimating(false);
+        setIndex(1);
+      }
+      if (index === 0) {
+        setIsAnimating(false);
+        setIndex(slides.length - 2);
+      }
+    };
+
+    const el = containerRef.current;
+    el.addEventListener("transitionend", handleTransitionEnd);
+
+    return () => el.removeEventListener("transitionend", handleTransitionEnd);
+  }, [index]);
+
+  useEffect(() => {
+    if (!isAnimating) {
+      requestAnimationFrame(() => setIsAnimating(true));
+    }
+  }, [isAnimating]);
+
   return (
-    <div className="relative w-full max-w-[520px] overflow-hidden">
+    <div className="w-full max-w-[520px] mx-auto">
 
-      {/* LEFT */}
-      <button
-        onClick={prev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
-      >
-        <FiArrowLeft />
-      </button>
+      {/* 🔹 MAIN SLIDER */}
+      <div className="relative overflow-hidden">
 
-      {/* RIGHT */}
-      <button
-        onClick={next}
-        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
-      >
-        <FiArrowRight />
-      </button>
+        {/* ARROWS */}
+        <button
+          onClick={prev}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
+        >
+          <FiArrowLeft />
+        </button>
 
-      {/* SLIDER */}
-      <div
-        {...bind()}
-        ref={containerRef}
-        className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-        style={{
-          transform: `translateX(-${index * 100}%)`,
-        }}
-      >
-        {media.map((src, i) => (
-          <div
-            key={i}
-            className="min-w-full flex justify-center items-center p-2"
-          >
-            <div className="w-full h-[420px] sm:h-[520px] rounded-[2rem] overflow-hidden glass border border-theme">
+        <button
+          onClick={next}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
+        >
+          <FiArrowRight />
+        </button>
+
+        {/* SLIDER TRACK */}
+        <div
+          {...bind()}
+          ref={containerRef}
+          className="flex"
+          style={{
+            transform: `translateX(-${index * 100}%)`,
+            transition: isAnimating
+              ? "transform 0.5s cubic-bezier(0.22,1,0.36,1)"
+              : "none",
+          }}
+        >
+          {slides.map((src, i) => (
+            <div key={i} className="min-w-full p-2 flex justify-center">
               
-              <img
-                src={src}
-                className="w-full h-full object-cover"
-                alt="media"
-              />
+              {/* 🔥 FIXED IMAGE RESPONSIVENESS */}
+              <div className="w-full max-w-[480px] aspect-[4/5] rounded-[2rem] overflow-hidden glass border border-theme">
+                <img
+                  src={src}
+                  className="w-full h-full object-contain sm:object-cover"
+                  alt="media"
+                />
+              </div>
 
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 🔹 THUMBNAILS (ONLY MOBILE) */}
+      <div className="flex gap-2 mt-4 overflow-x-auto sm:hidden px-2">
+        {media.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            onClick={() => setIndex(i + 1)}
+            className={`w-16 h-16 rounded-lg object-cover cursor-pointer border ${
+              index === i + 1 ? "border-white" : "border-white/20"
+            }`}
+          />
         ))}
       </div>
+
     </div>
   );
 };

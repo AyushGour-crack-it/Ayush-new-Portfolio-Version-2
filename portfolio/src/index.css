@@ -149,3 +149,8 @@ body {
 .animate-border {
   animation: borderFlow 6s linear infinite;
 }
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
