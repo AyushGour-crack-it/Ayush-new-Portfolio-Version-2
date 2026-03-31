@@ -1,8 +1,8 @@
-import { FiMail, FiArrowRight } from "react-icons/fi";
+import { FiMail, FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import { useRef, useEffect, useState } from "react";
 import { useSprings, animated } from "@react-spring/web";
 import { useDrag } from "@use-gesture/react";
-import { FiArrowLeft} from "react-icons/fi";
+
 /* ================= HERO DECK ================= */
 
 const media = [
@@ -11,39 +11,23 @@ const media = [
   "https://picsum.photos/600/800?random=2",
 ];
 
-const to = (i) => ({
-  x: 0,
-  y: i * -18,
-  scale: 1,
-  rot: -6 + Math.random() * 12,
-  delay: i * 80,
-});
-
-const from = () => ({
-  x: 0,
-  rot: 0,
-  scale: 1.2,
-  y: -150,
-});
-
-const trans = (r, s) =>
-  `perspective(1200px) rotateX(12deg) rotateY(${r / 10}deg) rotateZ(${r}deg) scale(${s})`;
-
 const HeroDeck = () => {
   const [index, setIndex] = useState(0);
 
   const [springs, api] = useSprings(media.length, (i) => ({
     x: 0,
-    y: i * -25,
+    y: i * -30,
     scale: 1,
-    rot: -6 + Math.random() * 12,
+    rot: 0,
   }));
 
-  // 👉 FIXED DRAG
-  const bind = useDrag(({ down, movement: [mx], velocity, direction: [xDir] }) => {
+  const next = () => setIndex((i) => (i + 1) % media.length);
+  const prev = () => setIndex((i) => (i - 1 + media.length) % media.length);
+
+  /* 🔥 DRAG FIX */
+  const bind = useDrag(({ down, movement: [mx], direction: [xDir] }) => {
     if (!down && Math.abs(mx) > 80) {
-      if (xDir > 0) prev();
-      else next();
+      xDir > 0 ? prev() : next();
       return;
     }
 
@@ -52,57 +36,49 @@ const HeroDeck = () => {
 
       return {
         x: down ? mx : 0,
-        rot: mx / 120,
-        scale: down ? 1.05 : 1,
+        rot: mx / 150,
+        scale: down ? 1.06 : 1,
         immediate: down,
       };
     });
   });
 
-  const next = () => {
-    setIndex((i) => (i + 1) % media.length);
-  };
-
-  const prev = () => {
-    setIndex((i) => (i - 1 + media.length) % media.length);
-  };
-
   useEffect(() => {
     api.start((i) => {
-      const position = (i - index + media.length) % media.length;
+      const pos = (i - index + media.length) % media.length;
 
       return {
         x: 0,
-        y: position * -25,
-        scale: 1 - position * 0.06,
-        rot: position * -4,
-        zIndex: media.length - position,
+        y: pos * -30,
+        scale: 1 - pos * 0.05,
+        rot: pos * -3,
+        zIndex: media.length - pos,
+        config: { tension: 500, friction: 40 },
       };
     });
   }, [index]);
 
   return (
-    <div className="relative w-[600px] h-[600px] flex items-center justify-center">
+    <div className="relative w-[650px] h-[650px] flex items-center justify-center">
 
-      {/* 🔥 LEFT ARROW */}
+      {/* LEFT */}
       <button
         onClick={prev}
-        className="absolute left-0 z-50 p-3 rounded-full 
-        glass border border-theme hover:scale-110 transition"
+        className="absolute left-2 z-50 p-3 rounded-full glass border border-theme 
+        hover:scale-110 transition group"
       >
-        ←
+        <FiArrowLeft className="group-hover:text-[var(--primary)]" />
       </button>
 
-      {/* 🔥 RIGHT ARROW */}
+      {/* RIGHT */}
       <button
         onClick={next}
-        className="absolute right-0 z-50 p-3 rounded-full 
-        glass border border-theme hover:scale-110 transition"
+        className="absolute right-2 z-50 p-3 rounded-full glass border border-theme 
+        hover:scale-110 transition group"
       >
-        →
+        <FiArrowRight className="group-hover:text-[var(--primary)]" />
       </button>
 
-      {/* CARDS */}
       {springs.map(({ x, y, rot, scale, zIndex }, i) => (
         <animated.div
           key={i}
@@ -111,27 +87,26 @@ const HeroDeck = () => {
             x,
             y,
             zIndex,
-            transform: `perspective(1200px) rotateX(10deg) rotateY(${rot / 10}deg) rotateZ(${rot}deg) scale(${scale})`,
+            transform: `perspective(1400px) rotateX(8deg) rotateY(${rot / 10}deg) rotateZ(${rot}deg) scale(${scale})`,
           }}
           className="absolute cursor-grab active:cursor-grabbing"
         >
-          <div
-            className="w-[480px] h-[480px] rounded-[2rem] overflow-hidden relative 
-            glass border border-theme transition-all duration-300"
-          >
+          <div className="relative w-[520px] h-[520px] rounded-[2rem] overflow-hidden">
 
-            {/* 🔥 PREMIUM BORDER GLOW */}
-            <div
-              className="absolute inset-0 rounded-[2rem] opacity-0 hover:opacity-100 transition duration-500 blur-xl"
-              style={{ background: "var(--primary)" }}
-            />
+            {/* 🔥 PREMIUM BORDER */}
+            <div className="absolute inset-0 rounded-[2rem] p-[1.5px] bg-gradient-to-br 
+            from-transparent via-[var(--primary)]/40 to-transparent animate-border">
 
-            {/* IMAGE */}
-            <img
-              src={media[i]}
-              className="w-full h-full object-cover relative z-10"
-              alt="media"
-            />
+              <div className="w-full h-full rounded-[2rem] glass border border-theme overflow-hidden">
+                <img
+                  src={media[i]}
+                  className="w-full h-full object-cover"
+                  alt="media"
+                />
+              </div>
+
+            </div>
+
           </div>
         </animated.div>
       ))}
@@ -150,9 +125,9 @@ const HeroSection = () => {
     const el = heroRef.current;
 
     audioRef.current = new Audio("/click.mp3");
-    audioRef.current.volume = 0.12;
+    audioRef.current.volume = 0.1;
 
-    const handleMove = (e) => {
+    const move = (e) => {
       const rect = el.getBoundingClientRect();
 
       const x = e.clientX - rect.left;
@@ -160,73 +135,60 @@ const HeroSection = () => {
 
       glowRef.current.style.transform = `translate(${x}px, ${y}px)`;
 
-      const rotateX = (y / rect.height - 0.5) * 2.5;
-      const rotateY = (x / rect.width - 0.5) * -2.5;
+      const rx = (y / rect.height - 0.5) * 2;
+      const ry = (x / rect.width - 0.5) * -2;
 
-      el.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
     };
 
-    const handleLeave = () => {
-      el.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    const leave = () => {
+      el.style.transform = `rotateX(0) rotateY(0)`;
     };
 
-    el.addEventListener("mousemove", handleMove);
-    el.addEventListener("mouseleave", handleLeave);
+    el.addEventListener("mousemove", move);
+    el.addEventListener("mouseleave", leave);
 
     return () => {
-      el.removeEventListener("mousemove", handleMove);
-      el.removeEventListener("mouseleave", handleLeave);
+      el.removeEventListener("mousemove", move);
+      el.removeEventListener("mouseleave", leave);
     };
   }, []);
 
   const playSound = () => {
-    if (!audioRef.current) return;
     audioRef.current.currentTime = 0;
     audioRef.current.play();
   };
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 pt-32 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10">
+    <section className="w-full max-w-7xl mx-auto px-4 pt-32 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-12">
 
       {/* LEFT */}
       <div
         ref={heroRef}
-        className="flex flex-col justify-center relative overflow-hidden transition-transform duration-200"
+        className="flex flex-col justify-center relative isolate transition-transform duration-200"
       >
 
-        {/* CURSOR GLOW */}
+        {/* FIXED GLOW */}
         <div
           ref={glowRef}
-          className="pointer-events-none absolute w-72 h-72 rounded-full blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"
+          className="pointer-events-none absolute w-80 h-80 rounded-full blur-3xl opacity-10 -translate-x-1/2 -translate-y-1/2"
           style={{ background: "var(--primary)" }}
         />
 
-        {/* STATUS */}
-        <div className="mb-4 inline-flex items-center gap-3 w-fit rounded-full border border-theme bg-surface px-4 py-2 text-sm text-theme-muted backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-          Available for creative frontend work
-        </div>
-
-        <div className="mb-6 inline-flex items-center gap-3 w-fit rounded-full border border-theme bg-surface px-4 py-2 text-sm text-theme-muted backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse"></span>
-          Available for advanced backend work
-        </div>
-
         {/* NAME */}
-        <h1 className="text-5xl lg:text-8xl font-extrabold leading-[0.9] tracking-tight flex flex-wrap">
-          {"Ayush Gour".split("").map((char, i) => (
+        <h1 className="text-5xl lg:text-8xl font-extrabold flex flex-wrap">
+          {"Ayush Gour".split("").map((c, i) => (
             <span
               key={i}
               className="hero-letter"
               style={{ animationDelay: `${i * 0.04}s` }}
               onMouseEnter={playSound}
             >
-              {char === " " ? "\u00A0" : char}
+              {c === " " ? "\u00A0" : c}
             </span>
           ))}
         </h1>
 
-        {/* TEXT */}
         <p className="mt-8 text-lg text-theme">
           Full Stack Developer • Web3 Enthusiast • Creative Technologist
         </p>
@@ -235,23 +197,20 @@ const HeroSection = () => {
           I build interactive, immersive web experiences using modern frontend technologies.
         </p>
 
-        {/* BUTTONS */}
         <div className="mt-8 flex gap-5">
           <button className="flex items-center gap-2 px-6 py-3 rounded-full 
-          bg-[var(--primary)] text-black font-semibold 
-          hover:gap-3 transition-all duration-200">
+          bg-[var(--primary)] text-black font-semibold hover:gap-3 transition-all">
             View Work <FiArrowRight size={16} />
           </button>
 
           <button className="flex items-center gap-2 px-6 py-3 rounded-full 
-          border border-theme text-theme 
-          hover:gap-3 transition-all duration-200">
+          border border-theme text-theme hover:gap-3 transition-all">
             Get in Touch <FiMail size={16} />
           </button>
         </div>
       </div>
 
-      {/* RIGHT → PREMIUM DECK */}
+      {/* RIGHT */}
       <div className="flex items-center justify-center">
         <HeroDeck />
       </div>
