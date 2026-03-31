@@ -111,11 +111,17 @@ const HeroDeck = () => {
       <div className="relative overflow-hidden">
 
         {/* ARROWS */}
-        <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass">
+        <button
+          onClick={prev}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass"
+        >
           <FiArrowLeft />
         </button>
 
-        <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass">
+        <button
+          onClick={next}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass"
+        >
           <FiArrowRight />
         </button>
 
@@ -137,11 +143,11 @@ const HeroDeck = () => {
             return (
               <div key={i} className="min-w-full p-2 flex justify-center">
 
-                {/* 🔥 ZOOM + PARALLAX */}
+                {/* 🔥 ZOOM + DEPTH */}
                 <div
                   className="w-full max-w-[480px] aspect-[4/5] rounded-[2rem] overflow-hidden relative"
                   style={{
-                    transform: isActive ? "scale(1)" : "scale(0.9)",
+                    transform: isActive ? "scale(1)" : "scale(0.92)",
                     transition: "transform 0.4s ease",
                     boxShadow: isActive
                       ? `0 20px 60px ${accent}55`
@@ -149,12 +155,13 @@ const HeroDeck = () => {
                   }}
                 >
 
-                  {/* 🔥 ANIMATED BORDER */}
+                  {/* ✅ CLEAN GLOW BORDER (NO ROTATION) */}
                   <div
                     className="absolute inset-0 rounded-[2rem] p-[2px]"
                     style={{
                       background: `linear-gradient(135deg, ${accent}, transparent, ${accent})`,
-                      animation: "spin 6s linear infinite",
+                      filter: "blur(0.6px)",
+                      opacity: isActive ? 1 : 0.6,
                     }}
                   >
                     <div className="w-full h-full rounded-[2rem] overflow-hidden glass">
