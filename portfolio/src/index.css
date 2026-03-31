@@ -131,3 +131,12 @@ body {
   50% { transform: translate(-1px, 1px); }
   100% { transform: translate(1px, -1px); }
 }
+
+@keyframes borderFlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-border {
+  animation: borderFlow 6s linear infinite;
+}
