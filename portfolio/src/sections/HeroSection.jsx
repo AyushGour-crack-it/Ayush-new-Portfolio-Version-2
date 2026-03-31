@@ -13,110 +13,73 @@ const media = [
 
 const HeroDeck = () => {
   const [index, setIndex] = useState(0);
+  const containerRef = useRef(null);
 
-  const [springs, api] = useSprings(media.length, (i) => ({
-    x: 0,
-    y: i * -30,
-    scale: 1,
-    rot: 0,
-  }));
+  const next = () => {
+    setIndex((prev) => (prev + 1) % media.length);
+  };
 
-  const next = () => setIndex((i) => (i + 1) % media.length);
-  const prev = () => setIndex((i) => (i - 1 + media.length) % media.length);
+  const prev = () => {
+    setIndex((prev) => (prev - 1 + media.length) % media.length);
+  };
 
-  /* 🔥 DRAG FIX (ONLY TOP CARD DRAGS) */
-  const bind = useDrag(({ down, movement: [mx], direction: [xDir] }) => {
-    if (!down && Math.abs(mx) > 80) {
-      xDir > 0 ? prev() : next();
-      return;
+  /* 🔥 DRAG / SWIPE */
+  const bind = useDrag(({ movement: [mx], down, direction: [xDir], velocity }) => {
+    if (!down) {
+      if (Math.abs(mx) > 80 || velocity > 0.3) {
+        xDir > 0 ? prev() : next();
+      }
     }
-
-    api.start((i) => {
-      if (i !== index) return;
-
-      return {
-        x: down ? mx : 0,
-        rot: mx / 150,
-        scale: down ? 1.06 : 1,
-        immediate: down,
-      };
-    });
   });
 
-  useEffect(() => {
-    api.start((i) => {
-      const pos = (i - index + media.length) % media.length;
-
-      return {
-        x: 0,
-        y: pos * -30,
-        scale: 1 - pos * 0.05,
-        rot: pos * -3,
-        zIndex: media.length - pos,
-        config: { tension: 500, friction: 40 },
-      };
-    });
-  }, [index, api]);
-
   return (
-    <animated.div className="relative w-[650px] h-[650px] flex items-center justify-center">
+    <div className="relative w-full max-w-[520px] overflow-hidden">
 
-      {/* LEFT ARROW */}
+      {/* LEFT */}
       <button
         onClick={prev}
-        className="absolute left-2 z-50 p-3 rounded-full glass border border-theme 
-        hover:scale-110 transition group"
+        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
       >
-        <FiArrowLeft className="group-hover:text-[var(--primary)]" />
+        <FiArrowLeft />
       </button>
 
-      {/* RIGHT ARROW */}
+      {/* RIGHT */}
       <button
         onClick={next}
-        className="absolute right-2 z-50 p-3 rounded-full glass border border-theme 
-        hover:scale-110 transition group"
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full glass border border-theme"
       >
-        <FiArrowRight className="group-hover:text-[var(--primary)]" />
+        <FiArrowRight />
       </button>
 
-      {/* CARDS */}
-      {springs.map(({ x, y, rot, scale, zIndex }, i) => (
-        <animated.div
-          key={i}
-          {...(i === index ? bind() : {})} // ✅ only top card draggable
-          style={{
-            x,
-            y,
-            zIndex,
-            transform: `perspective(1400px) rotateX(8deg) rotateY(${rot / 10}deg) rotateZ(${rot}deg) scale(${scale})`,
-          }}
-          className="absolute cursor-grab active:cursor-grabbing"
-        >
-          <div className="relative w-[520px] h-[520px] rounded-[2rem] overflow-hidden">
+      {/* SLIDER */}
+      <div
+        {...bind()}
+        ref={containerRef}
+        className="flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{
+          transform: `translateX(-${index * 100}%)`,
+        }}
+      >
+        {media.map((src, i) => (
+          <div
+            key={i}
+            className="min-w-full flex justify-center items-center p-2"
+          >
+            <div className="w-full h-[420px] sm:h-[520px] rounded-[2rem] overflow-hidden glass border border-theme">
+              
+              <img
+                src={src}
+                className="w-full h-full object-cover"
+                alt="media"
+              />
 
-            {/* 🔥 PREMIUM BORDER */}
-            <div
-              className="absolute inset-0 rounded-[2rem] p-[1.5px] 
-              bg-gradient-to-br from-transparent via-[var(--primary)]/40 to-transparent 
-              animate-border"
-            >
-              <div className="w-full h-full rounded-[2rem] glass border border-theme overflow-hidden">
-                <img
-                  src={media[i]}
-                  className="w-full h-full object-cover"
-                  alt="media"
-                />
-              </div>
             </div>
-
           </div>
-        </animated.div>
-      ))}
-
-    </animated.div>
+        ))}
+      </div>
+    </div>
   );
 };
-
 /* ================= HERO SECTION ================= */
 
 const HeroSection = () => {
