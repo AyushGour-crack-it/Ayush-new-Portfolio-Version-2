@@ -1,6 +1,6 @@
 import { FiMail, FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import { useRef, useEffect, useState } from "react";
-import { useSprings, animated } from "@react-spring/web";
+import { useSprings,  } from "@react-spring/web";
 import { useDrag } from "@use-gesture/react";
 
 /* ================= HERO DECK ================= */
@@ -24,7 +24,7 @@ const HeroDeck = () => {
   const next = () => setIndex((i) => (i + 1) % media.length);
   const prev = () => setIndex((i) => (i - 1 + media.length) % media.length);
 
-  /* 🔥 DRAG FIX */
+  /* 🔥 DRAG FIX (ONLY TOP CARD DRAGS) */
   const bind = useDrag(({ down, movement: [mx], direction: [xDir] }) => {
     if (!down && Math.abs(mx) > 80) {
       xDir > 0 ? prev() : next();
@@ -56,12 +56,12 @@ const HeroDeck = () => {
         config: { tension: 500, friction: 40 },
       };
     });
-  }, [index]);
+  }, [index, api]);
 
   return (
-    <div className="relative w-[650px] h-[650px] flex items-center justify-center">
+    <animated.div className="relative w-[650px] h-[650px] flex items-center justify-center">
 
-      {/* LEFT */}
+      {/* LEFT ARROW */}
       <button
         onClick={prev}
         className="absolute left-2 z-50 p-3 rounded-full glass border border-theme 
@@ -70,7 +70,7 @@ const HeroDeck = () => {
         <FiArrowLeft className="group-hover:text-[var(--primary)]" />
       </button>
 
-      {/* RIGHT */}
+      {/* RIGHT ARROW */}
       <button
         onClick={next}
         className="absolute right-2 z-50 p-3 rounded-full glass border border-theme 
@@ -79,10 +79,11 @@ const HeroDeck = () => {
         <FiArrowRight className="group-hover:text-[var(--primary)]" />
       </button>
 
+      {/* CARDS */}
       {springs.map(({ x, y, rot, scale, zIndex }, i) => (
         <animated.div
           key={i}
-          {...bind()}
+          {...(i === index ? bind() : {})} // ✅ only top card draggable
           style={{
             x,
             y,
@@ -94,9 +95,11 @@ const HeroDeck = () => {
           <div className="relative w-[520px] h-[520px] rounded-[2rem] overflow-hidden">
 
             {/* 🔥 PREMIUM BORDER */}
-            <div className="absolute inset-0 rounded-[2rem] p-[1.5px] bg-gradient-to-br 
-            from-transparent via-[var(--primary)]/40 to-transparent animate-border">
-
+            <div
+              className="absolute inset-0 rounded-[2rem] p-[1.5px] 
+              bg-gradient-to-br from-transparent via-[var(--primary)]/40 to-transparent 
+              animate-border"
+            >
               <div className="w-full h-full rounded-[2rem] glass border border-theme overflow-hidden">
                 <img
                   src={media[i]}
@@ -104,17 +107,17 @@ const HeroDeck = () => {
                   alt="media"
                 />
               </div>
-
             </div>
 
           </div>
         </animated.div>
       ))}
-    </div>
+
+    </animated.div>
   );
 };
 
-/* ================= HERO ================= */
+/* ================= HERO SECTION ================= */
 
 const HeroSection = () => {
   const heroRef = useRef(null);
@@ -125,7 +128,7 @@ const HeroSection = () => {
     const el = heroRef.current;
 
     audioRef.current = new Audio("/click.mp3");
-    audioRef.current.volume = 0.1;
+    audioRef.current.volume = 0.08;
 
     const move = (e) => {
       const rect = el.getBoundingClientRect();
@@ -155,6 +158,7 @@ const HeroSection = () => {
   }, []);
 
   const playSound = () => {
+    if (!audioRef.current) return;
     audioRef.current.currentTime = 0;
     audioRef.current.play();
   };
@@ -168,7 +172,7 @@ const HeroSection = () => {
         className="flex flex-col justify-center relative isolate transition-transform duration-200"
       >
 
-        {/* FIXED GLOW */}
+        {/* 🔥 FIXED GLOW (NO SQUARE BUG) */}
         <div
           ref={glowRef}
           className="pointer-events-none absolute w-80 h-80 rounded-full blur-3xl opacity-10 -translate-x-1/2 -translate-y-1/2"
@@ -189,6 +193,7 @@ const HeroSection = () => {
           ))}
         </h1>
 
+        {/* TEXT */}
         <p className="mt-8 text-lg text-theme">
           Full Stack Developer • Web3 Enthusiast • Creative Technologist
         </p>
@@ -197,6 +202,7 @@ const HeroSection = () => {
           I build interactive, immersive web experiences using modern frontend technologies.
         </p>
 
+        {/* BUTTONS */}
         <div className="mt-8 flex gap-5">
           <button className="flex items-center gap-2 px-6 py-3 rounded-full 
           bg-[var(--primary)] text-black font-semibold hover:gap-3 transition-all">
@@ -208,6 +214,7 @@ const HeroSection = () => {
             Get in Touch <FiMail size={16} />
           </button>
         </div>
+
       </div>
 
       {/* RIGHT */}
