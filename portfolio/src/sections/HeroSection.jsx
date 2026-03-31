@@ -1,6 +1,6 @@
 import { FiMail, FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import { useRef, useEffect, useState } from "react";
-import { useSprings,  } from "@react-spring/web";
+import { useSprings, animated } from "@react-spring/web";
 import { useDrag } from "@use-gesture/react";
 
 /* ================= HERO DECK ================= */
